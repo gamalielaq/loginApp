@@ -19,13 +19,11 @@ export class AuthService {
   // https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=[API_KEY]
 
 
-  
-
   constructor(
-    private http : HttpClient
+    private http: HttpClient
   ) {
     this.leerToken();
-   } 
+  }
 
 
   logout() {
@@ -33,18 +31,18 @@ export class AuthService {
   }
 
   login(usuario: UsuarioModel) {
-    
+
     const authData = {
       ...usuario,
       returnSecureToken: true
     }
-    
+
     return this.http.post(
-      `${this.url}signInWithPassword?key=${this.apikey}`, 
+      `${this.url}signInWithPassword?key=${this.apikey}`,
       authData
     ).pipe(
-      map( resp => {
-        
+      map(resp => {
+
         this.guardarToken(resp['idToken']);
         return resp;
 
@@ -62,11 +60,11 @@ export class AuthService {
     }
 
     return this.http.post(
-      `${this.url}signUp?key=${this.apikey}`, 
+      `${this.url}signUp?key=${this.apikey}`,
       authData
     ).pipe(
-      map( resp => {
-        
+      map(resp => {
+
         this.guardarToken(resp['idToken']);
         return resp;
       })
@@ -79,22 +77,49 @@ export class AuthService {
     this.userToken = idToken;
     localStorage.setItem('token', idToken);
 
+    let hoy = new Date();
+    hoy.setSeconds(3600);
+
+    localStorage.setItem('expira', hoy.getTime().toString());
   }
 
   leerToken() {
 
-    if ( localStorage.getItem('token') ) {
+    if (localStorage.getItem('token')) {
       this.userToken = localStorage.getItem('token');
     } else {
       this.userToken = '';
     }
-    
+
     return this.userToken;
   }
 
   estaAutenticado(): boolean {
-    return this.userToken.length > 2;
+
+    // 1° Forma
+    const tokenExpiresDate = Number(localStorage.getItem('expira'));
+    let currentDate = new Date();
+    currentDate.setTime(tokenExpiresDate);
+
+    return (this.userToken.length > 2 && (currentDate > new Date()))? true : false;
+
+
+    // 2° Forma
+    
+    // if (this.userToken.length < 2) return false;
+
+    // const expira = Number(localStorage.getItem('expira'));
+    // const expiraDate = new Date();
+    // expiraDate.setTime(expira);
+    // return expiraDate > new Date();  
+
+
+    // 3° Forma
+    // if (expiraDate > new Date()) {
+    //   return true;
+    // } else {
+    //   return false; // el token ya expiro
+    // }
+
   }
-
-
 }
